@@ -5,11 +5,17 @@ A feature-rich, safer cron alternative, written in OCaml.
 ## TODO
 
 - [x] cron schedule expression parser
-- [ ] tests for cron schedule expression parser
-- [ ] CLI interface using cmdliner: https://erratique.ch/software/cmdliner/doc/tutorial.html
-- [ ] persistent config storage
+- [x] persistent config storage
+- [x] CLI interface for managing jobs using [cmdliner](https://erratique.ch/software/cmdliner/doc/tutorial.html)
+- [ ] CI
+- [ ] functionality for computing execution times
 - [ ] job execution daemon
-- [ ] multiple trigger types
-- [ ] persistent metrics storage
+- [ ] tests for cron schedule expression parser
+- [ ] other trigger types
 - [ ] robust logging
+- [ ] persistent metrics storage
 - [ ] figure out how environment config should work
+- [ ] failure notifications (and for anomalies, e.g. unexpected stderr or long duration)
+- [ ] task support
+- [ ] thorough docs here in the README
+- [ ] cli commands to get natural language descriptions of schedules

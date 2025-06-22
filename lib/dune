@@ -1,3 +1,5 @@
 (library
  (name ocron)
- (libraries str))
+ (preprocess
+  (pps ppx_deriving_yojson))
+ (libraries str unix yojson))

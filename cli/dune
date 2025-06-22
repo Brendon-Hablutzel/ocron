@@ -1,4 +1,4 @@
 (executable
- (public_name ocron)
+ (public_name ocron.cli)
  (name main)
  (libraries ocron cmdliner))

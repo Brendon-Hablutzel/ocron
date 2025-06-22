@@ -15,6 +15,14 @@ type cron_term =
   (* */n, where this int is n *)
   | Interval of int
 
+let cron_term_string term =
+  match term with
+  | Any -> "*"
+  | Single n -> Int.to_string n
+  | Multiple ns -> String.concat "," (List.map Int.to_string ns)
+  | Range (from, until) -> Printf.sprintf "%d-%d" from until
+  | Interval nth -> Printf.sprintf "*/%d" nth
+
 type cron_schedule = {
   minute : cron_term;
   hour : cron_term;
@@ -23,12 +31,22 @@ type cron_schedule = {
   day_of_week : cron_term;
 }
 
+let cron_schedule_string schedule =
+  Printf.sprintf "%s %s %s %s %s"
+    (cron_term_string schedule.minute)
+    (cron_term_string schedule.hour)
+    (cron_term_string schedule.day_of_month)
+    (cron_term_string schedule.month)
+    (cron_term_string schedule.day_of_week)
+
+(* required for deriving yojson on job *)
+let cron_schedule_to_yojson schedule = `String (cron_schedule_string schedule)
 let any_re = Str.regexp "^\\*$"
 let single_re = Str.regexp "^\\([0-9]+\\)$"
 let range_re = Str.regexp "^\\([0-9]+\\)-\\([0-9]+\\)$"
 let interval_re = Str.regexp "^\\*\\/\\([0-9]+\\)$"
 
-(* TODO: look into the re library, might be a safer *)
+(* TODO: look into the re library, might be safer *)
 let parse_cron_term min_val max_val str_term =
   match str_term with
   (* any *)
@@ -101,3 +119,25 @@ let parse_cron_schedule string_cron_expr =
       let* day_of_week = parse_day_of_week_term day_of_week_str in
       Ok { minute; hour; day_of_month; month; day_of_week }
   | _ -> Error "cron schedule should have exactly 5 space-separated terms"
+
+let cron_schedule_of_yojson json =
+  match json with
+  | `String str -> parse_cron_schedule str
+  | _ -> Error "expected string for schedule"
+
+type crontab_entry = { schedule : cron_schedule; command : string }
+
+let parse_crontab_entry entry =
+  match String.split_on_char ' ' entry with
+  | minute :: hour :: day_of_month :: month :: day_of_week :: rest -> (
+      match
+        parse_cron_schedule
+          (Printf.sprintf "%s %s %s %s %s" minute hour day_of_month month
+             day_of_week)
+      with
+      | Ok schedule -> Ok { schedule; command = String.concat " " rest }
+      | Error err -> Error err)
+  | _ ->
+      Error
+        "invalid crontab entry: should have a valid expression followed by a \
+         command"
