@@ -8,7 +8,7 @@ A feature-rich, safer cron alternative, written in OCaml.
 - [x] persistent config storage
 - [x] CLI interface for managing jobs using [cmdliner](https://erratique.ch/software/cmdliner/doc/tutorial.html)
 - [x] CI
-- [ ] functionality for computing execution times
+- [x] functionality for computing execution times
 - [ ] job execution daemon
 - [ ] automated releases
 - [ ] tests for cron schedule expression parser

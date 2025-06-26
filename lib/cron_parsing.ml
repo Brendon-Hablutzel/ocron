@@ -9,7 +9,7 @@ type cron_term =
   (* a single number *)
   | Single of int
   (* multiple comma-separated numbers *)
-  | Multiple of int list
+  | Many of int list
   (* a-b *)
   | Range of int * int
   (* */n, where this int is n *)
@@ -19,7 +19,7 @@ let cron_term_string term =
   match term with
   | Any -> "*"
   | Single n -> Int.to_string n
-  | Multiple ns -> String.concat "," (List.map Int.to_string ns)
+  | Many ns -> String.concat "," (List.map Int.to_string ns)
   | Range (from, until) -> Printf.sprintf "%d-%d" from until
   | Interval nth -> Printf.sprintf "*/%d" nth
 
@@ -67,7 +67,7 @@ let parse_cron_term min_val max_val str_term =
   | str_term when String.contains str_term ',' -> (
       let split = String.split_on_char ',' str_term in
       match Util.map_option int_of_string_opt split with
-      | Some values -> Ok (Multiple values)
+      | Some values -> Ok (Many values)
       (* TODO: use map_result instead to get specific integer? *)
       | None ->
           Error
