@@ -244,7 +244,7 @@ let jobs_update current_name new_name new_schedule new_command new_enabled yes =
           ~default:new_job
       in
       (* TODO: if (new_)job is the same as old job, use interactive prompt *)
-      if current_job != new_job then (
+      if current_job <> new_job then (
         print_endline (printable_job current_job);
         print_endline (get_arrow_diff current_job new_job);
         print_endline (printable_job new_job);
@@ -302,7 +302,7 @@ let jobs_put current_name new_name new_schedule new_command new_enabled yes =
           enabled = new_enabled;
         }
       in
-      if current_job != new_job then (
+      if current_job <> new_job then (
         print_endline (printable_job current_job);
         print_endline (get_arrow_diff current_job new_job);
         print_endline (printable_job new_job);
