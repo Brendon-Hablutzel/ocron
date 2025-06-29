@@ -182,7 +182,7 @@ let user_select_one_from items to_string =
   with_raw_mode (fun () -> select_one_interactive_menu items to_string)
 
 let select_boolean prompt =
-  Printf.printf "%s " prompt;
+  Printf.printf "%s" prompt;
   flush Stdlib.stdout;
 
   let rec loop () =
