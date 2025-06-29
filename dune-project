@@ -17,7 +17,7 @@
  (name ocron)
  (synopsis "Feature-rich, OCaml-based cron alternative")
  (description "An user-friendly alternative to cron, built with OCaml")
- (depends ocaml cmdliner yojson ppx_deriving_yojson)
+ (depends ocaml cmdliner yojson ppx_deriving_yojson lwt psq)
  (tags
   ("cron" "cli")))
 

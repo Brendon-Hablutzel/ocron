@@ -1,4 +1,4 @@
 (executable
  (public_name ocron.daemon)
  (name main)
- (libraries ocron cmdliner))
+ (libraries ocron cmdliner psq lwt.unix))

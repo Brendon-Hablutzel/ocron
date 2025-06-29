@@ -13,6 +13,8 @@ depends: [
   "cmdliner"
   "yojson"
   "ppx_deriving_yojson"
+  "lwt"
+  "psq"
   "odoc" {with-doc}
 ]
 build: [

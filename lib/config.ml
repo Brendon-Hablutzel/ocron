@@ -23,6 +23,12 @@ let get_jobs_config_file_path () =
 
 let config_file_exists () = Sys.file_exists (get_jobs_config_file_path ())
 
+(** returns last modification time in (possibly fractional) seconds since epoch
+*)
+let config_file_last_modified () =
+  let config_file_path = get_jobs_config_file_path () in
+  (Unix.stat config_file_path).st_mtime
+
 (* helper function, should not be used directly outside this module *)
 let read_jobs_config () =
   let config_file_path = get_jobs_config_file_path () in
