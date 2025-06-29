@@ -9,7 +9,9 @@
 
 (authors "Brendon Hablutzel <booklvrbren@gmail.com>")
 
-(license LICENSE)
+(maintainers "booklvrbren@gmail.com")
+
+(license MIT)
 
 ; (documentation https://url/to/documentation)
 

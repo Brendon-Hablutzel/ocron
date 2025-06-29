@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5.1.0
+
+      - name: Install dune
+        run: opam install dune
+
+      - name: Install dependencies
+        run: |
+          eval $(opam env)
+          opam update
+          opam install . --deps-only --with-test
+
+      - name: Build binaries
+        run: |
+          eval $(opam env)
+          dune build
+          mkdir -p dist
+          cp _build/default/cli/main.exe dist/ocron
+          cp _build/default/daemon/main.exe dist/ocrond
+
+      - name: Archive release
+        run: |
+          cd dist
+          tar -czf ../ocron.tar.gz ocron ocrond
+          cd ..
+
+      - name: Upload release to GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ocron.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute SHA256 and Extract Version
+        id: release_info
+        run: |
+          echo "sha256=$(shasum -a 256 ocron.tar.gz | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Dispatch Homebrew Update Workflow
+        env:
+          DISPATCH_TOKEN: ${{ secrets.HOMEBREW_TOOLS_DISPATCH_TOKEN }}
+        run: |
+          curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token $DISPATCH_TOKEN" \
+          https://api.github.com/repos/Brendon-Hablutzel/homebrew-tools/dispatches \
+          -d '{
+            "event_type": "update-ocron-formula",
+            "client_payload": {
+              "version": "${{ steps.release_info.outputs.version }}",
+              "sha256": "${{ steps.release_info.outputs.sha256 }}",
+              "release_tag": "${{ github.ref_name }}"
+            }
+          }'

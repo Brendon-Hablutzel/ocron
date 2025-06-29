@@ -1,4 +1,4 @@
 (executable
- (public_name ocron.daemon)
+ (public_name ocrond)
  (name main)
  (libraries ocron cmdliner psq lwt.unix))
