@@ -39,10 +39,11 @@ let time_satisfies now cron_schedule =
   && Lazy.force month_satisfies
   && Lazy.force day_of_week_satisfies
 
+(* TODO: potentially some way to limit how far this looks in the future *)
 let calculate_next_execution_time now schedule =
   let next_minute = now +. seconds_until_next_minute now in
   let rec find_execution_time current_time =
     if time_satisfies current_time schedule then current_time
-    else find_execution_time current_time +. 60.
+    else find_execution_time (current_time +. 60.)
   in
   find_execution_time next_minute
