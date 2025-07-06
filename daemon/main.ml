@@ -36,19 +36,22 @@ let possible_job_thunk job =
   | [] -> Lwt.return_none
   | command :: args ->
       let full_command = (command, Array.of_list (command :: args)) in
+      let* () = Logs_lwt.info (fun m -> m "executing %s" job.name) in
+      let start_time = Unix.gettimeofday () in
       let process = Lwt_process.open_process_full full_command in
 
       let stdout_promise = Lwt_io.read process#stdout in
       let stderr_promise = Lwt_io.read process#stderr in
       let status_promise = process#status in
+      let end_time = Unix.gettimeofday () in
 
       let* stdout = stdout_promise in
       let* stderr = stderr_promise in
       let* status = status_promise in
-      Lwt.return_some (stdout, stderr, status)
+      Lwt.return_some (stdout, stderr, status, start_time, end_time)
 
 let handle_job_results results =
-  let print_result ((stdout, stderr, status), job) =
+  let print_result ((_stdout, _stderr, status, start_time, end_time), job) =
     let status_str =
       match status with
       | Unix.WEXITED n -> "exit " ^ string_of_int n
@@ -56,9 +59,9 @@ let handle_job_results results =
       | Unix.WSTOPPED n -> "stopped " ^ string_of_int n
     in
 
-    Lwt_io.printl
-      (Printf.sprintf "--- %s : %s ---\nstdout:\n%s\nstderr:\n%s\nstatus: %s\n"
-         job.name job.command stdout stderr status_str)
+    Logs_lwt.info (fun m ->
+        m "finished %s : %s : %s : %f to %f : %f seconds" job.name job.command
+          status_str start_time end_time (end_time -. start_time))
   in
 
   let print_all = List.map print_result results in
@@ -77,8 +80,8 @@ let execute_all_jobs jobs =
   let* () =
     Lwt_list.iter_p
       (fun job ->
-        Lwt_io.printl
-          (Printf.sprintf "Invalid command for %s: %s" job.name job.command))
+        Logs_lwt.warn (fun m ->
+            m "invalid command for %s: %s" job.name job.command))
       dropped_jobs
   in
   handle_job_results successful_results
@@ -127,8 +130,8 @@ let rec executor_loop maybe_current_psq maybe_last_execution_time =
   let last_execution_time =
     Option.value maybe_last_execution_time ~default:0.0
   in
-  let now = Unix.time () in
-  let* () = Lwt_io.printl (Printf.sprintf "Executing at %f..." now) in
+  let now = Unix.gettimeofday () in
+  let* () = Logs_lwt.info (fun m -> m "executing at %f" now) in
 
   let new_psq =
     match list_jobs () with
@@ -148,11 +151,28 @@ let rec executor_loop maybe_current_psq maybe_last_execution_time =
   let jobs_to_execute = List.map (fun (_, job) -> job) ready_job_executions in
 
   let job_promise = execute_all_jobs jobs_to_execute in
-  let sleep_duration = Scheduling.seconds_until_next_minute (Unix.time ()) in
+  let sleep_duration =
+    Scheduling.seconds_until_next_minute (Unix.gettimeofday ())
+  in
   let sleep_promise = Lwt_unix.sleep sleep_duration in
 
   let* () = job_promise in
   let* () = sleep_promise in
   executor_loop (Some new_psq) (Some now)
 
-let () = Lwt_main.run (executor_loop None None)
+let () =
+  Logs.set_reporter
+    (Logs_fmt.reporter
+       ~pp_header:(fun fmt (level, header) ->
+         let pp_timestamp fmt () =
+           let open Unix in
+           let tm = localtime (gettimeofday ()) in
+           Fmt.pf fmt "%04d-%02d-%02d %02d:%02d:%02d" (1900 + tm.tm_year)
+             (tm.tm_mon + 1) tm.tm_mday tm.tm_hour tm.tm_min tm.tm_sec
+         in
+         Fmt.pf fmt "[%a][%a]%a " pp_timestamp () Logs.pp_level level
+           (fun fmt -> function None -> () | Some s -> Fmt.pf fmt "[%s]" s)
+           header)
+       ());
+  Logs.set_level (Some Logs.Debug);
+  Lwt_main.run (executor_loop None None)

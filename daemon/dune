@@ -1,4 +1,4 @@
 (executable
  (public_name ocrond)
  (name main)
- (libraries ocron cmdliner psq lwt.unix))
+ (libraries ocron cmdliner psq lwt.unix logs logs.lwt logs.fmt))
