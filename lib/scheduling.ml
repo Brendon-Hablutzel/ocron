@@ -5,6 +5,7 @@ open Cron_parsing
 - skip over ranges with no valid values
 *)
 
+let is_wildcard = function Any -> true | _ -> false
 let seconds_until_next_minute now = 60. -. mod_float now 60.
 
 let time_component_satisfies time_component cron_term =
@@ -33,11 +34,21 @@ let time_satisfies now cron_schedule =
   let day_of_week_satisfies =
     lazy (time_component_satisfies now.tm_wday cron_schedule.day_of_week)
   in
+  let day_field_satisfies =
+    lazy
+      (match
+         ( is_wildcard cron_schedule.day_of_month,
+           is_wildcard cron_schedule.day_of_week )
+       with
+      | false, false ->
+          Lazy.force day_of_month_satisfies || Lazy.force day_of_week_satisfies
+      | false, true -> Lazy.force day_of_month_satisfies
+      | true, false -> Lazy.force day_of_week_satisfies
+      | true, true -> true)
+  in
   Lazy.force minute_satisfies
-  && Lazy.force hour_satisfies
-  && Lazy.force day_of_month_satisfies
-  && Lazy.force month_satisfies
-  && Lazy.force day_of_week_satisfies
+  && Lazy.force hour_satisfies && Lazy.force month_satisfies
+  && Lazy.force day_field_satisfies
 
 (* TODO: potentially some way to limit how far this looks in the future *)
 let calculate_next_execution_time now schedule =
