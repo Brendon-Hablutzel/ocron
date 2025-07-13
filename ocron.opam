@@ -18,6 +18,7 @@ depends: [
   "psq"
   "logs"
   "lsp"
+  "fmt"
   "odoc" {with-doc}
 ]
 build: [
