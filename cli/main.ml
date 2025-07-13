@@ -468,7 +468,41 @@ let init_cmd =
   let info = Cmd.info "init" ~doc:"Initialize ocron config" in
   Cmd.v info Term.(term_result (const init $ const ()))
 
+let human_readable_time (epoch : float) : string =
+  let tm = Unix.localtime epoch in
+  Printf.sprintf "%04d-%02d-%02d %02d:%02d:%02d" (tm.Unix.tm_year + 1900)
+    (tm.Unix.tm_mon + 1) tm.Unix.tm_mday tm.Unix.tm_hour tm.Unix.tm_min
+    tm.Unix.tm_sec
+
+let interpret schedule =
+  let cron_schedule = Cron_parsing.parse_cron_schedule schedule in
+  match cron_schedule with
+  | Ok cron_schedule ->
+      let now = Unix.gettimeofday () in
+      let next_execution =
+        Scheduling.calculate_next_execution_time now cron_schedule
+      in
+      let seconds_until_next_execution = next_execution -. now in
+      let mins_until_next_execution = seconds_until_next_execution /. 60.0 in
+      let readable_next_execution = human_readable_time next_execution in
+      let readable = Cron_parsing.readable_cron_schedule cron_schedule in
+      print_endline readable;
+      print_endline
+        (Printf.sprintf " ↳ next execution at %s (in %s minutes)"
+           (Input.green readable_next_execution)
+           (Input.cyan (Float.to_string mins_until_next_execution)));
+      Ok ()
+  | Error err -> Error (`Msg err)
+
+let required_schedule_first_arg =
+  let doc = "A cron schedule" in
+  Arg.(required & pos 0 (some string) None & info [] ~docv:"SCHEDULE" ~doc)
+
+let interpret_cmd =
+  let info = Cmd.info "interpret" ~doc:"Interpret cron schedule" in
+  Cmd.v info Term.(term_result (const interpret $ required_schedule_first_arg))
+
 let () =
   let info = Cmd.info "ocron" ~doc:"CLI for ocron" in
-  let main_cmd = Cmd.group info [ jobs_cmd_group; init_cmd ] in
+  let main_cmd = Cmd.group info [ jobs_cmd_group; init_cmd; interpret_cmd ] in
   exit (Cmd.eval main_cmd)
