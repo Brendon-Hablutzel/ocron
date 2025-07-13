@@ -18,8 +18,8 @@ export function activate(context: ExtensionContext) {
   statusBar.show();
   context.subscriptions.push(statusBar);
 
-  const serverExe =
-    "/Users/brendon/Code/ocron/_build/default/language_server/main.exe";
+  const relativeServerExe = "../../_build/default/language_server/main.exe";
+  const serverExe = path.resolve(__dirname, relativeServerExe);
 
   const serverOptions = () => {
     const child = cp.spawn(serverExe, [], {
