@@ -89,7 +89,7 @@ let parse_cron_term min_val max_val str_term =
         Error
           (Printf.sprintf
              "one or both range term values out of allowed range: %d and %d \
-              should each be betweeen %d and %d"
+              should both be betweeen %d and %d"
              range_begin range_end min_val max_val)
   (* interval *)
   | str_term when Str.string_match interval_re str_term 0 ->

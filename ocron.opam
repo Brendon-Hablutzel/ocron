@@ -17,6 +17,7 @@ depends: [
   "lwt"
   "psq"
   "logs"
+  "lsp"
   "odoc" {with-doc}
 ]
 build: [

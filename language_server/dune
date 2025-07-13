@@ -1,0 +1,5 @@
+(executable
+ (public_name language_server)
+ (name main)
+ (libraries ocron lsp lwt lwt.unix jsonrpc)
+ (modules main common text_doc_service))
